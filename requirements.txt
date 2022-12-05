@@ -1,4 +1,4 @@
 
 
 Pillow==9.3
-pygame==1.9.6
+pygame==2.1.2
