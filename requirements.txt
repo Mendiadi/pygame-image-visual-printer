@@ -1,0 +1,4 @@
+https://github.com/Mendiadi/pygame-image-visual-printer
+
+Pillow==9.3
+pygame==1.9.6
