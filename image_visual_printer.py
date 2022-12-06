@@ -1,6 +1,7 @@
 # writen by adi mendel 5/12/2022
 # feel free to look, use, modify, and learn from it
-
+import datetime
+import random
 import threading
 import numpy
 from PIL import Image
@@ -9,6 +10,8 @@ import time
 import tkinter
 from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
+
+EVENT = threading.Event()
 
 # global var to end program
 RUNNING = 1
@@ -68,16 +71,42 @@ def perform(pad, pixel_values, win, w, h, size, time_):
             pygame.draw.rect(win, pixel, (pad * i, pad * j, size, size))
             ptr += 1
 
-def print_text_to_screen(text,win):
+
+def loading(win, name):
+    """
+    show the load animation
+    :param win:
+    :return:
+    """
+
+    i = 0
+    rate = 0.05
+    while True:
+
+        i += 1
+        if i > 60:
+            rate = 0.01
+        if i >= 100:
+            break
+        if i > 90:
+            rate = 0.1
+        print_text_to_screen(f"LOADING {i}%", win, *(300, 300), 50)
+        print_text_to_screen(f"Processing data for {name}..", win)
+        time.sleep(rate)
+        win.fill("white")
+
+
+def print_text_to_screen(text, win, x=100, y=500, size=30):
     """
     this function just print text to the surface
     :param text: string to show
     :param win: surface
     :return:
     """
-    font = pygame.font.SysFont("arial", 30)
+    font = pygame.font.SysFont("arial", size)
     render = font.render(text, False, (0, 0, 0))
-    win.blit(render, (100, 500))
+    win.blit(render, (x, y))
+
 
 def paint_image(win, path):
     """
@@ -90,10 +119,16 @@ def paint_image(win, path):
     :param path: image path
     :return:
     """
+
     image = get_pixels(path)
+    name = parse_path(path)
+
+    loading(win, name)
     if not image:
-        print_text_to_screen("sorry the image file format doesnt supported",win)
+        print_text_to_screen(f"Image Format not Supported -> {name}", win)
         return
+
+    time.sleep(1)
     pixel_values, w, h, pad = image
     perform(pad, pixel_values, win, w, h, 1, 0.01)
     perform(pad, pixel_values, win, w, h, 3, 0.02)
@@ -105,20 +140,23 @@ def paint_images(win, images):
     starting point of the visual
     runs through all the images
     and perform paint for each image
-
     :param win: surface
     :param images: list of images
     :return:
     """
+    EVENT.wait()
+    amount = len(images)
+    print_text_to_screen(f"STARTING... DETECTED {amount} images.", win, 300, 200, 30)
+    time.sleep(2)
     for image in images:
         paint_image(win, image)
         time.sleep(2)
         win.fill("white")
-
-    print_text_to_screen("visual done. quiting...",win)
+    print_text_to_screen("VISUAL DONE. quiting...", win, *(100, 100))
     time.sleep(2)
     global RUNNING
     RUNNING = 0
+
 
 def main(win):
     """
@@ -129,10 +167,9 @@ def main(win):
     global RUNNING
     pygame.init()
     fps = 60
-
     clock = pygame.time.Clock()
     win.fill("white")
-
+    EVENT.set()
     while RUNNING:
         pygame.display.set_caption(f"FPS {int(clock.get_fps())}")
         for event in pygame.event.get():
@@ -142,8 +179,9 @@ def main(win):
 
         pygame.display.flip()
         clock.tick(fps)
-
+    EVENT.clear()
     pygame.quit()
+
 
 # initial tkinter window for filedialog and nice basic gui setup
 
@@ -159,9 +197,9 @@ def run_paint(images):
     """
     root.destroy()
     win = pygame.display.set_mode((1000, 1000))
-
     threading.Thread(target=paint_images, args=(win, images), daemon=True).start()
     main(win)
+
 
 # global var names to store the files images names
 names = []
@@ -193,12 +231,13 @@ def upload():
     :return:
     """
     global names, t_box
-    names = filedialog.askopenfilenames()
+    names = filedialog.askopenfilenames(title="Choose Images")
     names = list(filter(lambda x: x.endswith("jpg") or x.endswith("png")
                                   or x.endswith("JPG") or x.endswith("PNG"), names))
     t_box.config(state="normal")
     t_box.insert(0.0, "\n".join([parse_path(name) for name in names]))
     t_box.config(state="disabled")
+
 
 # init all widgets for tkinter gui
 bg_color = "cyan"
@@ -222,4 +261,5 @@ btn = tkinter.Button(root, text="start", command=lambda: run_paint(names), bg="r
                      font="none 10", height=1, width=10, fg="white")
 btn.pack(pady=10)
 root.mainloop()
+
 
