@@ -1,3 +1,6 @@
+# writen by adi mendel 5/12/2022
+# feel free to look, use, modify, and learn from it
+
 import threading
 import numpy
 from PIL import Image
@@ -11,7 +14,7 @@ from tkinter.scrolledtext import ScrolledText
 RUNNING = 1
 
 
-def get_image(image_path):
+def get_pixels(image_path):
     """
     take image path and return its pixels in rgb 2d array
     steps:
@@ -87,7 +90,7 @@ def paint_image(win, path):
     :param path: image path
     :return:
     """
-    image = get_image(path)
+    image = get_pixels(path)
     if not image:
         print_text_to_screen("sorry the image file format doesnt supported",win)
         return
